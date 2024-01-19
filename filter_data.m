@@ -2,7 +2,7 @@ clear all;
 close all;
 eeglab;
 %% load the data
-filename= 'TEP_001_2023.01.10_10.01.08.set';
+filename= 'TEP_011_2023.03.23_11.40.35.set';
 %filename='';
 filepath= 'D:\Popovic\Anja\EEG-emotion\EEG-emotion';
 
@@ -23,8 +23,8 @@ EEG = pop_eegfiltnew(EEG, 'hicutoff',45);          % ==== reduces rank!
 %EEG.data = bandpass(EEG.data',[1 45],EEG.srate)';  % ==== reduces rank!
 %EEG.data = lowpass(EEG.data', 45, EEG.srate, 'ImpulseResponse','fir', 'Steepness',0.95 )'; % ==== reduces rank! -fir less than iir
 
-% cut away the first 1000 samples due to th einitial drift
-EEG = eeg_eegrej( EEG, [1 1000] );
+% cut away the first 1000 samples due to the einitial drift
+%EEG = eeg_eegrej( EEG, [1 1000] );
 
 % 4. Re-reference to average 
 %EEG = pop_reref( EEG, []);
@@ -34,6 +34,7 @@ EEG = eeg_eegrej( EEG, [1 1000] );
 EEG = pop_resample(EEG, 200, 0.8, 0.4); %=================
 EEG = eeg_checkset( EEG );
 
+%%
 %eeglab redraw; % refresh GUI using data defined in the command mode
 %fs=EEG.srate;
 %nrEl = EEG.nbchan;
@@ -62,6 +63,7 @@ for datasetIndex = 1:numDatasets
     for epoch = 1:numEpochs
         epochData = squeeze(currentEEG.data(:, :, epoch));
 
+       
         for c1 = 1:nrEl
             for c2 = c1+1:nrEl
                 GC = GCmodel(epochData([c1 c2], :), order);
@@ -76,13 +78,25 @@ for datasetIndex = 1:numDatasets
 end
 
 toc 
-%% 
-figure(22);
-imagesc(conG2); colorbar; title(['Granger causality (self implemented), order=' num2str(order) ', ' EEG.setname ]);
-xticks([1:nrEl]);xticklabels({EEG.chanlocs.labels}); xtickangle(90)
-yticks([1:nrEl]);yticklabels({EEG.chanlocs.labels});
-xlabel('influencing electrode');
-ylabel('influenced electrode');
-axis equal;axis tight;
 
- 
+% Plot each epoch separately
+figure;
+% %for epoch = 1:numEpochs
+%    % subplot(1, numEpochs, epoch);
+%     %imagesc(conG2_epochs(:,:,epoch));
+%     colorbar;
+%     title(['Epoch ' num2str(epoch)]);
+%     xticks([1:nrEl]);
+% 
+%     xticklabels({EEG.chanlocs.labels(:)});
+%     xtickangle(90);
+%     yticks([1:nrEl]);
+%     yticklabels({EEG.chanlocs.labels(:)});
+%     xlabel('Influencing electrode');
+%     ylabel('Influenced electrode');
+%     axis equal;
+%     axis tight;
+% %end
+
+% Adjust the title for the entire figure
+%title(['Granger causality (self implemented), order=' num2str(order) ', ' EEG.setname ]);
