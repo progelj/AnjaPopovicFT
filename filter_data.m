@@ -1,4 +1,4 @@
-clear all;
+%clear all;
 close all;
 eeglab;
 %% load the data
@@ -41,6 +41,7 @@ EEG = eeg_checkset( EEG );
 [OUTEEG, indices] = pop_epoch (EEG, {'Veselje', 'Gnus', 'Nevtralno', 'Strah'}, [0 2]);
 
 
+
 %% granger causality with the custom made functions:
 % GCdata = [EEG.data(elA,:); EEG.data(elB,:)];
 % %[GC, A1, A2, A12 , e1, e2, e12] = GCmodel(GCdata, 20);
@@ -51,39 +52,49 @@ conG2_all_datasets = cell(1, numDatasets);
 
 tic
 
-for datasetIndex = 1:numDatasets
+for datasetIndex = 1%:numDatasets
     currentEEG = OUTEEG(datasetIndex); % Assuming OUTEEG is an array of EEG datasets
    
 
     numEpochs = size(currentEEG.data, 3);
     nrEl = size(currentEEG.data, 1); % Number of electrodes (channels)
-    nrTimePoints = size(currentEEG.data, 2); % Number of time points
-    conG2_epochs = zeros(nrEl, nrTimePoints , numEpochs);
+    %nrTimePoints = size(currentEEG.data, 2); % Number of time points
+    conG2_epochs = zeros(nrEl, nrEl , numEpochs);
+    epochLabelsIndex = cell(1, numEpochs);
+    epochLabels = cell(1, numEpochs);
+    
 
-    for epoch = 1:numEpochs
-        epochData = squeeze(currentEEG.data(:, :, epoch));
-
-       
+    for ep = 1:numEpochs
+        epochData = squeeze(currentEEG.data(:, :, ep));
+        
+        % Event type index extraction
+        eventCellArray = OUTEEG(datasetIndex).epoch(ep).event;
+        % Initialize a variable to store the minimum event value
+        minEventValue = min(eventCellArray);
+        epochLabelsIndex{ep} = minEventValue;
+        % Event type label extraction
+        epochLabels{ep} = OUTEEG(datasetIndex).event([epochLabelsIndex{ep}]).type;
+ 
         for c1 = 1:nrEl
             for c2 = c1+1:nrEl
                 GC = GCmodel(epochData([c1 c2], :), order);
                 GC = max(GC, [0 0]);
-                conG2_epochs(c1, c2, epoch) = GC(1);
-                conG2_epochs(c2, c1, epoch) = GC(2);
+                conG2_epochs(c1, c2, ep) = GC(1);
+                conG2_epochs(c2, c1, ep) = GC(2);
             end
         end
     end
-    
-    conG2_all_datasets{datasetIndex} = conG2_epochs;
+    save(['connectivity_matrices_' num2str(datasetIndex)], 'conG2_epochs', 'epochLabels');
+    %conG2_all_datasets{datasetIndex} = conG2_epochs;
 end
 
 toc 
-
+%%
 % Plot each epoch separately
 figure;
-% %for epoch = 1:numEpochs
-%    % subplot(1, numEpochs, epoch);
-%     %imagesc(conG2_epochs(:,:,epoch));
+% for epoch = 1%:numEpochs
+%     subplot(1, numEpochs, epoch);
+%     imagesc(conG2_epochs(:,:,epoch));
 %     colorbar;
 %     title(['Epoch ' num2str(epoch)]);
 %     xticks([1:nrEl]);
@@ -96,7 +107,7 @@ figure;
 %     ylabel('Influenced electrode');
 %     axis equal;
 %     axis tight;
-% %end
+% end
 
 % Adjust the title for the entire figure
 %title(['Granger causality (self implemented), order=' num2str(order) ', ' EEG.setname ]);
